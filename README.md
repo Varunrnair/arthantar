@@ -1,84 +1,116 @@
-🔧 Technical Details - Arthantar
-Understanding the Arthantar System
-Arthantar is a multi-layered translation enhancement system that ensures gender-awareness and contextual fidelity by combining advanced NLP models, fallback mechanisms, and knowledge graph generation.
+# Technical Details - Arthantar
 
-🧠 System Architecture
-Arthantar employs a three-layered architecture:
+## Understanding the Arthantar System
 
-Gender Identification Layer
+Arthantar is a contextual translation system that uses a multi-layered approach to enhance translations. The system integrates gender identification, knowledge graph generation, coreference resolution, and specialized translation prompts to ensure accurate and semantically-preserved translations. Below is a detailed explanation of the system components, architecture, and translation process.
 
-Primary: Uses the FCoref module for coreference-based gender resolution
+### System Architecture
 
-Backup: Groq LLM for gender prediction when coreference fails
+#### Multi-Layered Approach
 
-Knowledge Graph Generation Layer
+Arthantar implements a sophisticated multi-layered approach to improve translation by utilizing:
 
-Primary: LLMGraphTransformer with Groq API
+1. **Gender Identification Layer**
+   - **Primary**: FCoref module for coreference resolution
+   - **Backup**: LLM-based gender prediction using Groq API
 
-Backup: spaCy for named entity and relation extraction
+2. **Knowledge Graph Generation Layer**
+   - **Primary**: LLMGraphTransformer with Groq API
+   - **Backup**: spaCy-based entity and relationship extraction
+   - **Fallback**: Basic entity extraction using capitalized words
 
-Fallback: Heuristic-based entity extraction using capitalization
+3. **Translation Enhancement Layer**
+   - Contextual prompt generation with knowledge graph metadata
+   - Gender and relationship-aware translation
 
-Translation Enhancement Layer
+#### System Components
 
-Builds gender- and relation-aware prompts for LLM translation
+- **FCoref**: State-of-the-art coreference resolution
+- **Groq API**: LLM integration for various tasks
+- **LangChain**: Framework for LLM applications
+- **spaCy**: NLP toolkit for backup processing
+- **NetworkX**: Graph operations and analysis
+- **Streamlit**: Interactive web interface
 
-System Flow (Mermaid Diagram):
-mermaid
-Copy
-Edit
-graph TD;
-    A["Input Text"] --> B["Coreference Resolution (FCoref)"]
-    B --> C["Gender Identification"]
-    A --> D["Knowledge Graph Generation"]
-    C --> D
-    D --> E["Contextual Prompt Generation"]
-    E --> F["Enhanced Translation (Groq LLM)"]
-    F --> G["Final Translation"]
+#### Fallback Mechanisms
 
-    B -- "Failure" --> H["LLM Gender Prediction"]
-    H --> D
-    D -- "Failure" --> I["spaCy Backup Graph"]
-    I --> E
-    I -- "Failure" --> J["Basic Entity Extraction"]
-    J --> E
-Technologies Used
-FCoref: Coreference resolution
+The system implements multiple fallback mechanisms to ensure robustness:
 
-Groq API: LLM backend
+1. If coreference resolution fails → Use LLM for gender prediction
+2. If LLM graph generation fails → Use spaCy-based graph generation
+3. If spaCy processing fails → Use basic entity extraction
 
-spaCy: NLP toolkit
+This ensures that even in challenging scenarios, the system can still provide useful translations with contextual awareness.
 
-LangChain: Orchestration of LLM workflows
+### Coreference Resolution
 
-NetworkX: Graph creation
+Coreference resolution is the task of finding all expressions that refer to the same entity in a text. In Arthantar, we use the FCoref module, which identifies clusters of related pronouns and assigns genders to entities based on context.
 
-Streamlit: Web interface for interaction
+#### Gender Identification Process
 
-🔁 Coreference Resolution
-This module identifies entity clusters in the input text and assigns genders using pronoun resolution. If ambiguous, an LLM is queried for prediction.
+1. The text is analyzed to identify clusters of related mentions
+2. Each cluster is checked for gendered pronouns (he/him/his or she/her/hers)
+3. If a cluster contains gendered pronouns, all entities in that cluster are assigned the corresponding gender
+4. For entities without clear gender indicators, the LLM is used as a backup
 
-Example:
-"Kiran is a good student. Sita is his science teacher, and he is Kiran's favorite teacher."
-→ Resolves "he" to "Kiran" and infers gender as male.
+#### Challenges in Coreference Resolution
 
-Fallback: If pronoun-based gender can't be determined, LLM is used.
+- **Ambiguous Pronouns**: When pronouns could refer to multiple entities
+- **Implicit References**: When entities are referenced without explicit pronouns
+- **Cross-Cultural Names**: Names that may be used for different genders in different cultures
 
-📊 Knowledge Graph Generation
-Entities and relationships are extracted to construct a structured knowledge graph:
+Arthantar addresses these challenges through its multi-layered approach and fallback mechanisms.
 
-Primary: LLM-based graph extraction
+### Knowledge Graph Generation
 
-Backup: spaCy-based entity/relation parser
+A knowledge graph represents entities and their relationships in a structured format. In Arthantar, our knowledge graphs contain:
 
-Fallback: Rule-based capitalized word extraction
+- **Nodes**: Representing entities with attributes like type and gender
+- **Relationships**: Representing connections between entities
 
-Each node may carry metadata like type and gender. The graph enriches the translation with context.
+#### Generation Process
 
-Applications:
+1. **Primary Method**: Using LLMGraphTransformer with Groq API
+   - Text is processed by the LLM to extract entities and relationships
+   - Gender information is added from coreference resolution
+   - A structured graph is created using NetworkX
 
-Context-aware translation
+2. **Backup Method**: Using spaCy NLP
+   - Named Entity Recognition (NER) identifies entities
+   - Dependency parsing identifies relationships
+   - Gender information is added from coreference or LLM prediction
 
-Gender consistency
+3. **Fallback Method**: Basic entity extraction
+   - Capitalized words are treated as entities
+   - Sequential relationships are created
+   - Gender information is added where available
 
-Preservation of semantic relationships
+### Translation Process
+
+Arthantar enhances translation by incorporating contextual information from the knowledge graph:
+
+1. **Prompt Generation**
+   - The knowledge graph is converted to a metadata string
+   - This metadata includes entity types, genders, and relationships
+   - A specialized prompt is created for the LLM
+
+2. **Translation with Context**
+   - The LLM uses the knowledge graph metadata to inform translation
+   - Gender information ensures proper gender agreement in the target language
+   - Relationship information preserves semantic connections
+
+3. **Advantages Over Standard Translation**
+   - **Gender Accuracy**: Correctly handles gendered pronouns and agreements
+   - **Contextual Awareness**: Understands entity relationships
+   - **Semantic Preservation**: Maintains meaning across languages
+
+### Future Improvements
+
+- **Multi-language Support**: Extend beyond Hindi to other languages
+- **Enhanced Entity Recognition**: Improve identification of complex entities
+- **Relationship Extraction**: Develop more sophisticated relationship detection
+- **Performance Optimization**: Reduce processing time for real-time applications
+
+---
+
+Arthantar - Contextual Translation System
