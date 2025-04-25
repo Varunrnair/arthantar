@@ -1,349 +1,270 @@
 import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
-from utils.translator import EnhancedKnowledgeGraphGenerator
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+def main():
+    st.set_page_config(
+        page_title="Technical Details - Arthantar",
+        page_icon="📚",
+        layout="wide"
+    )
+    
+    st.title("📚 Technical Details")
+    st.subheader("Understanding the Technology Behind Arthantar")
+    
+    # Overview
+    st.markdown("""
+    ## Overview
+    
+    Arthantar is a sophisticated multi-layered approach to improve translation by utilizing a combination of gender identification, coreference resolution, and knowledge graph generation. The core of this approach relies on multiple technologies and models, each serving a specific function.
+    """)
+    
+    # Create tabs for different components
+    tab1, tab2, tab3, tab4 = st.tabs(["Coreference Resolution", "LLM Integration", "Knowledge Graph", "Translation Process"])
+    
+    with tab1:
+        st.markdown("""
+        ### Coreference Resolution
+        
+        For gender identification, Arthantar uses the `FCoref` module, a coreference resolution tool that identifies gendered pronouns and assigns genders to entities based on context.
+        
+        #### How it works:
+        
+        1. The module analyzes the text and identifies clusters of related pronouns
+        2. It uses predefined sets of male and female pronouns to determine the likely gender of each entity
+        3. The system resolves ambiguous pronouns and determines gender accurately, with a focus on proper noun gender inference
+        
+        #### Example:
+        
+        In the sentence "Kiran is a good student and she goes to school", the coreference resolution identifies that "Kiran" and "she" refer to the same entity, and therefore Kiran is female.
+        """)
+        
+        # Code snippet
+        st.code("""
+# Example of coreference resolution
+from fastcoref import FCoref
+
+coref_model = FCoref()
+text = "Kiran is a good student and she goes to school."
+preds = coref_model.predict(texts=[text])
+clusters = preds[0].get_clusters()
+
+# Output: [['Kiran', 'she']]
+print(clusters)
+        """, language="python")
+    
+    with tab2:
+        st.markdown("""
+        ### Large Language Model Integration
+        
+        Arthantar incorporates an advanced large language model (LLM) using the Groq API. For gender identification when coreference resolution fails, it uses models like `llama-3.1-8b-8192` or `mixtral-8x7b-32768`.
+        
+        #### How it works:
+        
+        1. The LLM is employed as a backup to predict the likely gender of entities
+        2. It analyzes contextual clues such as the name or role described
+        3. If the coreference model doesn't provide a clear gender, the system sends a prompt to the LLM
+        4. The LLM analyzes the entity name and its type and predicts its gender
+        
+        #### Example prompt:
+        """)
+        
+        st.code("""
+prompt = f\"\"\"
+Analyze the entity name 'Kiran' with type 'Person'.
+If it's a person, determine their likely gender based on context.
+Respond with exactly one word: 'male', 'female', or 'unknown'.
+For non-person entities, always respond with 'unknown'.
+\"\"\"
+
+response = llm.predict(prompt)
+# Output might be: "female"
+        """, language="python")
+    
+    with tab3:
+        st.markdown("""
+        ### Knowledge Graph Generation
+        
+        For knowledge graph generation, Arthantar uses the `LLMGraphTransformer` library, which facilitates the creation of a knowledge graph that encapsulates entities and their relationships.
+        
+        #### How it works:
+        
+        1. The knowledge graph is fed into the LLM, which processes the input text and extracts relevant information
+        2. The graph includes entities, gender data, and relationships between them
+        3. The knowledge graph is built by first converting the input text into graph documents
+        4. Nodes and relationships are created using the transformer's output
+        5. These nodes are enriched with gender information identified by coreference resolution or LLM
+        
+        #### Fallback mechanisms:
+        
+        If both the coreference and LLM fail to provide sufficient data, a more sophisticated backup method is employed using spaCy's natural language processing capabilities:
+        
+        1. Named entity recognition (NER) extracts entities like persons, organizations, and locations
+        2. Dependency parsing establishes relationships through syntactic analysis
+        3. The NetworkX library creates a directed graph where entities are connected based on syntactic relationships
+        """)
+        
+        # Simple code example for knowledge graph generation
+        st.code("""
+# Example of knowledge graph generation
 import networkx as nx
 
-# Set page configuration
-st.set_page_config(
-    page_title="Technical Details - Arthantar",
-    page_icon="🔧",
-    layout="wide"
-)
+# Create a directed graph
+G = nx.DiGraph()
 
-# Custom CSS
-with open("assets/style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# Add nodes with gender information
+G.add_node("Kiran", type="Person", gender="female")
+G.add_node("school", type="Location", gender="unknown")
 
-st.title("Technical Details")
-st.subheader("Understanding the Arthantar System")
+# Add relationships
+G.add_edge("Kiran", "school", type="GOES_TO")
 
-# Create tabs for different sections
-tab1, tab2, tab3, tab4 = st.tabs([
-    "System Architecture", 
-    "Coreference Resolution", 
-    "Knowledge Graph Generation",
-    "Translation Process"
-])
-
-with tab1:
-    st.header("System Architecture")
+# Convert to dictionary format
+graph = {
+    'nodes': [{
+        'id': n,
+        'type': G.nodes[n]['type'],
+        'gender': G.nodes[n]['gender']
+    } for n in G.nodes()],
+    'relationships': [{
+        'source': u,
+        'target': v,
+        'type': G.edges[u, v]['type']
+    } for u, v in G.edges()]
+}
+        """, language="python")
     
-    st.markdown("""
-    ### Multi-Layered Approach
-    
-    Arthantar implements a sophisticated multi-layered approach to improve translation by utilizing:
-    
-    1. **Gender Identification Layer**
-       - Primary: FCoref module for coreference resolution
-       - Backup: LLM-based gender prediction using Groq API
-       
-    2. **Knowledge Graph Generation Layer**
-       - Primary: LLMGraphTransformer with Groq API
-       - Backup: spaCy-based entity and relationship extraction
-       - Fallback: Basic entity extraction using capitalized words
-       
-    3. **Translation Enhancement Layer**
-       - Contextual prompt generation with knowledge graph metadata
-       - Gender and relationship-aware translation
-    
-    ### System Components
-    """)
-    
-    # Create a diagram of the system architecture
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
+    with tab4:
         st.markdown("""
-        ```mermaid
-        graph TD;
-            A["Input Text"] --> B["Coreference Resolution (FCoref)"]
-            B --> C["Gender Identification"]
-            A --> D["Knowledge Graph Generation"]
-            C --> D
-            D --> E["Contextual Prompt Generation"]
-            E --> F["Enhanced Translation (Groq LLM)"]
-            F --> G["Final Translation"]
-            
-            B -- "Failure" --> H["LLM Gender Prediction"]
-            H --> D
-            D -- "Failure" --> I["spaCy Backup Graph"]
-            I --> E
-            I -- "Failure" --> J["Basic Entity Extraction"]
-            J --> E
-        ```
-        """)
-    
-    with col2:
-        st.markdown("""
-        ### Key Technologies
+        ### Translation Process
         
-        - **FCoref**: State-of-the-art coreference resolution
-        - **Groq API**: LLM integration for various tasks
-        - **LangChain**: Framework for LLM applications
-        - **spaCy**: NLP toolkit for backup processing
-        - **NetworkX**: Graph operations and analysis
-        - **Streamlit**: Interactive web interface
+        The knowledge graph plays a crucial role in providing contextual information to the translation process, ensuring that the translation model can handle gender nuances and understand the relationships between entities.
+        
+        #### Standard vs. Enhanced Translation:
+        
+        1. **Standard Translation**: Uses only the source text without additional context
+        2. **Enhanced Translation**: Incorporates knowledge graph metadata to inform gender and relationship context
+        
+        #### Example of enhanced translation prompt:
+        """)
+        
+        st.code("""
+# Example of enhanced translation prompt
+prompt = {
+    "role": "user",
+    "content": (
+        "Translate to Hindi (Devanagari) using only the gender and relationship context "
+        "of entities from metadata; reply with only the Hindi text: "
+        "'Kiran is a good student and she goes to school.' "
+        "Meta data: Knowledge Graph Structure: Nodes: Kiran (Type: Person, Gender: female), "
+        "school (Type: Location, Gender: unknown). "
+        "Relationships: Kiran --[GOES_TO]--> school."
+    )
+}
+        """, language="python")
+        
+        st.markdown("""
+        #### Multi-level Fallback System:
+        
+        The system implements multi-level fallback through exception handling:
+        
+        1. If the coreference model encounters errors, it defaults to the LLM
+        2. If the LLM fails, it uses the spaCy-based graph generation
+        3. If spaCy processing fails, it falls back to a basic entity extraction using capitalized words
+        
+        This ensures that, regardless of the failure point, a semantically meaningful graph is always available to provide contextual information for the translation model.
         """)
     
+    # Implementation details
     st.markdown("""
-    ### Fallback Mechanisms
+    ## Implementation Details
     
-    The system implements multiple fallback mechanisms to ensure robustness:
+    ### Required Libraries
     
-    1. If coreference resolution fails → Use LLM for gender prediction
-    2. If LLM graph generation fails → Use spaCy-based graph generation
-    3. If spaCy processing fails → Use basic entity extraction
+    The Arthantar system relies on several key libraries:
+    """)
     
-    This ensures that even in challenging scenarios, the system can still provide useful translations with contextual awareness.
+    # Display requirements
+    st.code("""
+# Core dependencies
+fastcoref==2.1.6
+groq==0.4.1
+langchain==0.1.5
+langchain-groq==0.1.5
+langchain-experimental==0.0.47
+networkx==3.1
+spacy==3.7.2
+streamlit==1.31.0
+python-dotenv==1.0.0
+matplotlib==3.7.1
+
+# Additional dependencies
+numpy==1.24.3
+pandas==2.0.1
+    """, language="text")
+    
+    # API Key setup
+    st.markdown("""
+    ### API Key Setup
+    
+    Arthantar requires a Groq API key to function. This key should be stored in a `.env` file in the root directory of the project:
+    """)
+    
+    st.code("""
+# .env file
+GROQ_API_KEY=your_groq_api_key_here
+    """, language="text")
+    
+    # System architecture diagram
+    st.markdown("""
+    ## System Architecture
+    
+    The Arthantar system follows a multi-layered architecture with several components working together:
+    
+    1. **Input Processing Layer**: Handles text input and preprocessing
+    2. **Coreference Resolution Layer**: Identifies entity references and gender information
+    3. **Knowledge Graph Generation Layer**: Creates a structured representation of entities and relationships
+    4. **Translation Layer**: Uses the knowledge graph to enhance translation quality
+    
+    Each layer has fallback mechanisms to ensure robustness and reliability.
+    """)
+    
+    # Performance considerations
+    st.markdown("""
+    ## Performance Considerations
+    
+    ### Caching
+    
+    The Streamlit application implements caching to improve performance:
+    
+    1. Previously processed examples are stored in the session state
+    2. Models are loaded lazily to reduce startup time
+    3. Computationally expensive operations like graph generation are only performed when necessary
+    
+    ### API Usage
+    
+    The application is designed to minimize API calls:
+    
+    1. Coreference resolution is performed locally when possible
+    2. LLM calls are only made when necessary (e.g., when coreference resolution fails)
+    3. Results are cached to avoid redundant API calls
+    """)
+    
+    # Future improvements
+    st.markdown("""
+    ## Future Improvements
+    
+    The Arthantar system could be enhanced in several ways:
+    
+    1. **Support for more languages**: Extend beyond Hindi to other languages with complex gender systems
+    2. **Improved entity recognition**: Enhance the accuracy of entity and gender identification
+    3. **More sophisticated knowledge graphs**: Incorporate additional relationship types and entity attributes
+    4. **User feedback loop**: Allow users to correct gender assignments and improve the system over time
+    5. **Offline mode**: Implement fully local models for environments without internet access
     """)
 
-with tab2:
-    st.header("Coreference Resolution")
-    
-    st.markdown("""
-    ### How Coreference Resolution Works
-    
-    Coreference resolution is the task of finding all expressions that refer to the same entity in a text. In Arthantar, we use the FCoref module, which identifies clusters of related pronouns and assigns genders to entities based on context.
-    
-    #### Example:
-    
-    In the sentence "**Kiran** is a good student and **she** goes to school", coreference resolution identifies that "Kiran" and "she" refer to the same entity, and therefore Kiran is likely female.
-    
-    ### Gender Identification Process
-    
-    1. The text is analyzed to identify clusters of related mentions
-    2. Each cluster is checked for gendered pronouns (he/him/his or she/her/hers)
-    3. If a cluster contains gendered pronouns, all entities in that cluster are assigned the corresponding gender
-    4. For entities without clear gender indicators, the LLM is used as a backup
-    
-    ### Challenges in Coreference Resolution
-    
-    - **Ambiguous Pronouns**: When pronouns could refer to multiple entities
-    - **Implicit References**: When entities are referenced without explicit pronouns
-    - **Cross-Cultural Names**: Names that may be used for different genders in different cultures
-    
-    Arthantar addresses these challenges through its multi-layered approach and fallback mechanisms.
-    """)
-    
-    # Add a simple example visualization
-    st.subheader("Example Coreference Clusters")
-    
-    example_text = "Kiran is a good student. Sita is his science teacher, and he is Kiran's favorite teacher."
-    
-    if st.button("Run Coreference Example"):
-        if 'GROQ_API_KEY' in st.session_state and st.session_state['GROQ_API_KEY']:
-            try:
-                kg_generator = EnhancedKnowledgeGraphGenerator(st.session_state['GROQ_API_KEY'])
-                gender_map = kg_generator.identify_genders_coref(example_text)
-                
-                # Display clusters
-                preds = kg_generator.coref_model.predict(texts=[example_text])
-                clusters = preds[0].get_clusters()
-                
-                for i, cluster in enumerate(clusters):
-                    st.markdown(f"**Cluster {i+1}:** {' | '.join(cluster)}")
-                
-                # Display gender map
-                if gender_map:
-                    st.subheader("Identified Genders")
-                    gender_df = pd.DataFrame(
-                        [(entity, gender) for entity, gender in gender_map.items()],
-                        columns=["Entity", "Gender"]
-                    )
-                    st.dataframe(gender_df)
-                else:
-                    st.info("No gender information identified from coreference.")
-            except Exception as e:
-                st.error(f"Error running coreference example: {str(e)}")
-        else:
-            st.warning("Please enter your Groq API key on the home page to run this example.")
-
-with tab3:
-    st.header("Knowledge Graph Generation")
-    
-    st.markdown("""
-    ### Knowledge Graph Components
-    
-    A knowledge graph represents entities and their relationships in a structured format. In Arthantar, our knowledge graphs contain:
-    
-    - **Nodes**: Representing entities with attributes like type and gender
-    - **Relationships**: Representing connections between entities
-    
-    ### Generation Process
-    
-    1. **Primary Method**: Using LLMGraphTransformer with Groq API
-       - Text is processed by the LLM to extract entities and relationships
-       - Gender information is added from coreference resolution
-       - A structured graph is created using NetworkX
-    
-    2. **Backup Method**: Using spaCy NLP
-       - Named Entity Recognition (NER) identifies entities
-       - Dependency parsing identifies relationships
-       - Gender information is added from coreference or LLM prediction
-    
-    3. **Fallback Method**: Basic entity extraction
-       - Capitalized words are treated as entities
-       - Sequential relationships are created
-       - Gender information is added where available
-    
-    ### Knowledge Graph Applications
-    
-    - **Context Enhancement**: Provides structural context for translation
-    - **Gender Tracking**: Ensures consistent gender usage across languages
-    - **Relationship Preservation**: Maintains semantic relationships in translation
-    """)
-    
-    # Add a simple example visualization
-    st.subheader("Example Knowledge Graph")
-    
-    example_text = "Kiran is a good student. Sita is his science teacher, and he is Kiran's favorite teacher."
-    
-    if st.button("Generate Example Graph"):
-        if 'GROQ_API_KEY' in st.session_state and st.session_state['GROQ_API_KEY']:
-            try:
-                kg_generator = EnhancedKnowledgeGraphGenerator(st.session_state['GROQ_API_KEY'])
-                graph = kg_generator.create_graph_from_text(example_text)
-                
-                # Create NetworkX graph for visualization
-                G = nx.DiGraph()
-                
-                # Add nodes
-                for node in graph['nodes']:
-                    G.add_node(node['id'], type=node['type'], gender=node['gender'])
-                
-                # Add edges
-                for rel in graph['relationships']:
-                    G.add_edge(rel['source'], rel['target'], type=rel['type'])
-                
-                # Create visualization
-                fig, ax = plt.subplots(figsize=(10, 6))
-                pos = nx.spring_layout(G, seed=42)
-                
-                # Node colors based on gender
-                gender_colors = {
-                    'male': '#ADD8E6',    # Light blue
-                    'female': '#FFB6C1',  # Light pink
-                    'unknown': '#D3D3D3'  # Light gray
-                }
-                
-                node_colors = [gender_colors[G.nodes[n]['gender']] for n in G.nodes()]
-                
-                nx.draw(G, pos, with_labels=True, node_color=node_colors, 
-                       node_size=2000, font_size=10, font_weight='bold')
-                
-                edge_labels = {(u, v): G.edges[u, v]['type'] for u, v in G.edges()}
-                nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
-                
-                plt.title("Example Knowledge Graph")
-                plt.axis('off')
-                st.pyplot(fig)
-                
-                # Display graph data
-                st.subheader("Graph Data")
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.markdown("**Nodes**")
-                    nodes_df = pd.DataFrame(graph['nodes'])
-                    st.dataframe(nodes_df)
-                
-                with col2:
-                    st.markdown("**Relationships**")
-                    if graph['relationships']:
-                        rels_df = pd.DataFrame(graph['relationships'])
-                        st.dataframe(rels_df)
-                    else:
-                        st.info("No relationships found in the graph.")
-                
-            except Exception as e:
-                st.error(f"Error generating example graph: {str(e)}")
-        else:
-            st.warning("Please enter your Groq API key on the home page to run this example.")
-
-with tab4:
-    st.header("Translation Process")
-    
-    st.markdown("""
-    ### Contextual Translation
-    
-    Arthantar enhances translation by incorporating contextual information from the knowledge graph:
-    
-    1. **Prompt Generation**
-       - The knowledge graph is converted to a metadata string
-       - This metadata includes entity types, genders, and relationships
-       - A specialized prompt is created for the LLM
-    
-    2. **Translation with Context**
-       - The LLM uses the knowledge graph metadata to inform translation
-       - Gender information ensures proper gender agreement in the target language
-       - Relationship information preserves semantic connections
-    
-    3. **Advantages Over Standard Translation**
-       - **Gender Accuracy**: Correctly handles gendered pronouns and agreements
-       - **Contextual Awareness**: Understands entity relationships
-       - **Semantic Preservation**: Maintains meaning across languages
-    
-    ### Example Translation Process
-    """)
-    
-    example_text = "Kiran is a good student. Sita is his science teacher, and he is Kiran's favorite teacher."
-    
-    if st.button("Show Translation Process"):
-        if 'GROQ_API_KEY' in st.session_state and st.session_state['GROQ_API_KEY']:
-            try:
-                kg_generator = EnhancedKnowledgeGraphGenerator(st.session_state['GROQ_API_KEY'])
-                
-                # Step 1: Generate knowledge graph
-                with st.spinner("Generating knowledge graph..."):
-                    graph = kg_generator.create_graph_from_text(example_text)
-                
-                # Step 2: Generate translation prompt
-                with st.spinner("Generating translation prompt..."):
-                    prompt = kg_generator.generate_translation_prompt(example_text, graph)
-                
-                # Step 3: Translate
-                with st.spinner("Translating..."):
-                    translation = kg_generator.translate_text(prompt)
-                    
-                    # Also get standard translation for comparison
-                    standard_prompt = {
-                        "role": "user",
-                        "content": f"Translate this to Hindi and send only the translated part: {example_text}"
-                    }
-                    standard_translation = kg_generator.translate_text(standard_prompt)
-                
-                # Display results
-                st.subheader("Translation Results")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.markdown("**Contextual Translation**")
-                    st.markdown(f"**{translation}**")
-                
-                with col2:
-                    st.markdown("**Standard Translation**")
-                    st.markdown(f"**{standard_translation}**")
-                
-                # Display prompt
-                with st.expander("View Translation Prompt"):
-                    st.code(prompt["content"], language="text")
-                
-            except Exception as e:
-                st.error(f"Error in translation process: {str(e)}")
-        else:
-            st.warning("Please enter your Groq API key on the home page to run this example.")
-    
-    st.markdown("""
-    ### Future Improvements
-    
-    - **Multi-language Support**: Extend beyond Hindi to other languages
-    - **Enhanced Entity Recognition**: Improve identification of complex entities
-    - **Relationship Extraction**: Develop more sophisticated relationship detection
-    - **Performance Optimization**: Reduce processing time for real-time applications
-    """)
-
-# Footer
-st.markdown("---")
-st.markdown("Arthantar - Contextual Translation System")
+if __name__ == "__main__":
+    main()

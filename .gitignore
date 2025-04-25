@@ -1,2 +1,4 @@
 .env
 venv310
+pycache
+__pycache__
