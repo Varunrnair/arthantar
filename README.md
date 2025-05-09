@@ -1,3 +1,5 @@
+![alt text](image.png)
+![alt text](image-1.png)
 ![alt text](<Screenshot 2025-05-09 221839.png>)
 # Technical Details - Arthantar
 
