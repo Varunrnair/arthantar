@@ -3,13 +3,13 @@ from groq import Groq
 from typing import Dict, Optional
 
 class EnhancedTranslator:
-    def __init__(self, api_key: str, model_name: str = "llama-3.1-8b-instant"):
+    def __init__(self, api_key: str, model_name: str = "llama-3.3-70b-versatile"):
         """Initialize the translator with Groq API"""
         self.api_key = api_key
         self.model_name = model_name
         self.client = Groq(api_key=api_key)
     
-    def get_standard_translation(self, text: str, target_language: str = "Hindi") -> str:
+    def get_standard_translation(self, text: str, target_language: str = "Hindi",temperature: float = 0.3) -> str:
         """Get a standard translation without context enhancement"""
         try:
             chat_completion = self.client.chat.completions.create(
@@ -19,7 +19,9 @@ class EnhancedTranslator:
                         "content": f"Translate this in {target_language} and send only the {target_language} translated part: {text}",
                     }
                 ],
-                model=self.model_name,
+                # model=self.model_name,
+                model="llama-3.1-8b-instant",
+                temperature=temperature,  # Added temperature parameter
             )
             return chat_completion.choices[0].message.content
         except Exception as e:
