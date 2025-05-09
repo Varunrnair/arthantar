@@ -1,3 +1,4 @@
+![alt text](<Screenshot 2025-05-09 221839.png>)
 # Technical Details - Arthantar
 
 ## Understanding the Arthantar System
