@@ -23,9 +23,34 @@ def main():
     """)
     
     # Create tabs for different components
-    tab1, tab2, tab3, tab4 = st.tabs(["Coreference Resolution", "LLM Integration", "Knowledge Graph", "Translation Process"])
+    tab1, tab2, tab3, tab4 , tab5= st.tabs(["Flow","Coreference Resolution", "LLM Integration", "Knowledge Graph", "Translation Process"])
     
     with tab1:
+        st.image("assets/mainimage.png", caption="Knowledge Graph Visualization", use_container_width=True)
+
+    with tab2:
+        # Example section at the start of the tab
+        st.markdown("### Example of Coreference Resolution in Action")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### Original Text")
+            st.info("""
+            Sheela went to the market. She bought vegetables and fruits. 
+            Later she gave some to her neighbor Rahul. He thanked her.
+            """)
+        
+        with col2:
+            st.markdown("#### Identified Clusters")
+            st.success("""
+            Cluster 1: ['Sheela', 'She', 'she', 'her']
+            Cluster 2: ['Rahul', 'He']
+            """)
+        
+        st.markdown("This example shows how coreference resolution identifies that 'Sheela', 'She', and 'her' refer to the same female entity, while 'Rahul' and 'He' refer to a male entity.")
+        
+        st.divider()
+        
         st.markdown("""
         ### Coreference Resolution
         
@@ -56,7 +81,28 @@ clusters = preds[0].get_clusters()
 print(clusters)
         """, language="python")
     
-    with tab2:
+    with tab3:
+        # Example section at the start of the tab
+        st.markdown("### Example of LLM Gender Identification")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### LLM Prompt")
+            st.info("""
+            Analyze the entity name 'Aarav' with type 'Person'.
+            If it's a person, determine their likely gender based on context.
+            Respond with exactly one word: 'male', 'female', or 'unknown'.
+            For non-person entities, always respond with 'unknown'.
+            """)
+        
+        with col2:
+            st.markdown("#### LLM Response")
+            st.success("male")
+        
+        st.markdown("In this example, the LLM correctly identifies 'Aarav' as a traditionally male Indian name when coreference resolution couldn't determine the gender.")
+        
+        st.divider()
+        
         st.markdown("""
         ### Large Language Model Integration
         
@@ -84,7 +130,28 @@ response = llm.predict(prompt)
 # Output might be: "female"
         """, language="python")
     
-    with tab3:
+    with tab4:
+        # Example section at the start of the tab
+        st.markdown("### Example Knowledge Graph Visualization")
+        
+        st.markdown("""
+        Below is a visual representation of a simple knowledge graph generated from the text:
+        "John went to the store with his brother Michael, who was buying groceries."
+        """)
+        
+        try:
+            st.image("assets/kg1.png", caption="Knowledge Graph Visualization", use_container_width=True)
+        except:
+            st.warning("Knowledge graph image not found. Please add an image at 'assets/knowledge_graph_example.png' or update the path.")
+            st.markdown("""
+            **Note:** To add your own knowledge graph visualization:
+            1. Create a folder named 'assets' in your project directory
+            2. Add your knowledge graph image as 'knowledge_graph_example.png'
+            3. Or modify the code to use your own image path
+            """)
+        
+        st.divider()
+        
         st.markdown("""
         ### Knowledge Graph Generation
         
@@ -137,7 +204,37 @@ graph = {
 }
         """, language="python")
     
-    with tab4:
+    with tab5:
+        # Example section at the start of the tab
+        st.markdown("### Example of Enhanced Translation")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("#### Standard Translation")
+            st.info("""
+            **English**: "Kiran is a good student and she goes to school."
+            
+            **Hindi (Standard)**: "किरण एक अच्छा छात्र है और वह स्कूल जाता है।"
+            
+            *Note: The gender is ambiguous and defaults to masculine form*
+            """)
+        
+        with col2:
+            st.markdown("#### Arthantar Enhanced Translation")
+            st.success("""
+            **English**: "Kiran is a good student and she goes to school."
+            
+            **Knowledge Graph**: Kiran (Person, female) --[GOES_TO]--> school (Location)
+            
+            **Hindi (Enhanced)**: "किरण एक अच्छी छात्रा है और वह स्कूल जाती है।"
+            
+            *Note: Correctly uses feminine form based on knowledge graph*
+            """)
+        
+        st.markdown("This example demonstrates how the knowledge graph provides critical gender context that leads to a more accurate translation with proper gender agreement in Hindi.")
+        
+        st.divider()
+        
         st.markdown("""
         ### Translation Process
         
@@ -178,45 +275,6 @@ prompt = {
         This ensures that, regardless of the failure point, a semantically meaningful graph is always available to provide contextual information for the translation model.
         """)
     
-    # Implementation details
-    st.markdown("""
-    ## Implementation Details
-    
-    ### Required Libraries
-    
-    The Arthantar system relies on several key libraries:
-    """)
-    
-    # Display requirements
-    st.code("""
-# Core dependencies
-fastcoref==2.1.6
-groq==0.4.1
-langchain==0.1.5
-langchain-groq==0.1.5
-langchain-experimental==0.0.47
-networkx==3.1
-spacy==3.7.2
-streamlit==1.31.0
-python-dotenv==1.0.0
-matplotlib==3.7.1
-
-# Additional dependencies
-numpy==1.24.3
-pandas==2.0.1
-    """, language="text")
-    
-    # API Key setup
-    st.markdown("""
-    ### API Key Setup
-    
-    Arthantar requires a Groq API key to function. This key should be stored in a `.env` file in the root directory of the project:
-    """)
-    
-    st.code("""
-# .env file
-GROQ_API_KEY=your_groq_api_key_here
-    """, language="text")
     
     # System architecture diagram
     st.markdown("""
